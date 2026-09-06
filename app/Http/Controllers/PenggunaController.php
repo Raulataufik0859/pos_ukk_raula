@@ -16,8 +16,10 @@ class PenggunaController extends Controller
 
         $users = User::with('role')
             ->when($keyword, function ($query) use ($keyword) {
-                $query->where('name', 'like', '%' . $keyword . '%')
-                    ->orWhere('email', 'like', '%' . $keyword . '%');
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('name', 'like', '%' . $keyword . '%')
+                      ->orWhere('email', 'like', '%' . $keyword . '%');
+                });
             })
             ->latest()
             ->paginate(10)
@@ -29,7 +31,6 @@ class PenggunaController extends Controller
     public function create()
     {
         $roles = Role::orderBy('name')->get();
-
         return view('users.create', compact('roles'));
     }
 
@@ -56,19 +57,35 @@ class PenggunaController extends Controller
 
     public function edit(User $user)
     {
-        $roles = Role::orderBy('name')->get();
+        // Backend guard: admin tidak bisa diedit (termasuk lewat URL langsung)
+        if (strtolower(optional($user->role)->name ?? '') === 'admin') {
+            return redirect()
+                ->route('admin.users')
+                ->with('error', 'Akun admin tidak dapat diedit melalui sistem.');
+        }
 
+        $roles = Role::orderBy('name')->get();
         return view('users.edit', compact('user', 'roles'));
     }
 
     public function update(Request $request, User $user)
     {
+        // Backend guard: tolak update akun admin (proteksi Postman / request langsung)
+        if (strtolower(optional($user->role)->name ?? '') === 'admin') {
+            return redirect()
+                ->route('admin.users')
+                ->with('error', 'Akun admin tidak dapat diubah melalui sistem.');
+        }
+
         $request->validate([
             'name'     => 'required|string|max:100',
             'email'    => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:6',
             'role_id'  => 'required|exists:roles,id',
         ]);
+
+        // Cegah elevate ke admin secara sembarangan jika perlu — opsional:
+        // role_id tetap boleh diisi (kasir -> admin hanya jika admin yang request)
 
         $data = [
             'name'    => $request->name,
@@ -89,15 +106,13 @@ class PenggunaController extends Controller
 
     public function destroy(User $user)
     {
-        // Jangan hapus diri sendiri
         if ($user->id === auth()->id()) {
             return redirect()
                 ->route('admin.users')
-                ->with('error', 'Anda tidak bisa menghapus akun sendiri.');
+                ->with('error', 'Tidak dapat menghapus akun sendiri.');
         }
 
-        // Jangan hapus admin (opsional, sesuai logic index)
-        if (optional($user->role)->name === 'admin') {
+        if (strtolower(optional($user->role)->name ?? '') === 'admin') {
             return redirect()
                 ->route('admin.users')
                 ->with('error', 'Akun admin tidak dapat dihapus.');

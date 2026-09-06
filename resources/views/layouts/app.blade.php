@@ -85,7 +85,7 @@
                     {{-- Logo + Brand --}}
                     <div class="flex items-center gap-2.5">
                         <img src="{{ asset('imagelogo/lopos.jpg') }}" alt="Logo"
-                            class="w-9 h-9 rounded-xl object-cover shadow-md shadow-indigo-500/25 shrink-0">
+                            class="w-10 h-10 rounded-xl object-contain bg-white p-0.5 shadow-md shadow-indigo-500/25 shrink-0">
                         <div class="leading-tight hidden sm:block">
                             <div class="font-bold text-gray-900 dark:text-white text-[15px]">POS Raula</div>
                             <div class="text-[11px] text-gray-500 dark:text-gray-400">Point of Sale</div>

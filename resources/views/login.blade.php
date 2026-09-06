@@ -14,11 +14,11 @@
 
         {{-- Logo (ganti file public/imagelogo/lopos.jpg kapan saja) --}}
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-24 h-24 rounded-[28px] overflow-hidden
+            <div class="inline-flex items-center justify-center w-28 h-28 rounded-[28px] overflow-hidden
                         bg-white/10 border border-white/20 shadow-2xl shadow-indigo-500/30 mb-5">
                 <img src="{{ asset('imagelogo/lopos.jpg') }}"
                      alt="Logo POS Raula"
-                     class="w-full h-full object-cover"
+                     class="w-full h-full object-contain bg-white p-1"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="hidden w-full h-full items-center justify-center bg-gradient-to-tr from-indigo-500 to-purple-500">
                     <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

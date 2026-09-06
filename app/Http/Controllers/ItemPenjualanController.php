@@ -13,17 +13,32 @@ class ItemPenjualanController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'product_id' => 'required|exists:produk,id',
-            'quantity'   => 'required|integer|min:1',
+            'product_id'    => 'required|exists:produk,id',
+            'quantity'      => 'required|integer|min:1',
+            'penjualan_id'  => 'nullable|exists:penjualan,id',
         ]);
 
         try {
             DB::transaction(function () use ($request) {
                 $produk = Produk::lockForUpdate()->findOrFail($request->product_id);
 
-                $sale = Penjualan::where('user_id', auth()->id())
-                    ->where('status', 'OPEN')
-                    ->firstOrFail();
+                // Pakai penjualan_id dari form (halaman yang sedang dibuka)
+                if ($request->filled('penjualan_id')) {
+                    $sale = Penjualan::where('id', $request->penjualan_id)
+                        ->where('status', 'OPEN')
+                        ->firstOrFail();
+                } else {
+                    $sale = Penjualan::where('user_id', auth()->id())
+                        ->where('status', 'OPEN')
+                        ->latest()
+                        ->firstOrFail();
+                }
+
+                // Kasir hanya boleh mengisi transaksi sendiri
+                $role = strtolower(auth()->user()->role->name ?? '');
+                if ($role === 'kasir' && (int) $sale->user_id !== (int) auth()->id()) {
+                    throw new \Exception('Anda tidak berhak mengubah transaksi ini.');
+                }
 
                 if ($produk->stok < $request->quantity) {
                     throw new \Exception('Stok tidak mencukupi! Sisa stok: ' . $produk->stok);
@@ -35,11 +50,9 @@ class ItemPenjualanController extends Controller
 
                 if ($item) {
                     $newQty = $item->kuantitas + $request->quantity;
-
                     if ($produk->stok < $request->quantity) {
                         throw new \Exception('Stok tidak mencukupi!');
                     }
-
                     $item->kuantitas = $newQty;
                     $item->subtotal  = $newQty * $item->harga_satuan;
                     $item->save();
@@ -52,9 +65,6 @@ class ItemPenjualanController extends Controller
                         'subtotal'      => $produk->harga_jual * $request->quantity,
                     ]);
                 }
-
-                // Opsional: kurangi stok saat ditambahkan ke keranjang
-                // $produk->decrement('stok', $request->quantity);
 
                 $sale->update([
                     'total_pembayaran' => $sale->itemPenjualan()->sum('subtotal'),
@@ -76,25 +86,26 @@ class ItemPenjualanController extends Controller
         try {
             DB::transaction(function () use ($request, $id) {
                 $item = ItemPenjualan::findOrFail($id);
-                $produk = $item->produk()->lockForUpdate()->first();
+                $sale = $item->penjualan;
 
-                $selisih = $request->quantity - $item->kuantitas;
-
-                if ($selisih > 0 && $produk->stok < $selisih) {
-                    throw new \Exception('Stok tidak mencukupi! Sisa stok: ' . $produk->stok);
+                if ($sale->status !== 'OPEN') {
+                    throw new \Exception('Transaksi sudah diproses.');
                 }
 
-                // Jika kamu mengurangi stok saat tambah item, aktifkan baris ini:
-                // if ($selisih > 0) $produk->decrement('stok', $selisih);
-                // if ($selisih < 0) $produk->increment('stok', abs($selisih));
+                $produk = $item->produk()->lockForUpdate()->first();
+                $selisih = $request->quantity - $item->kuantitas;
+
+                if ($selisih > 0 && $produk && $produk->stok < $selisih) {
+                    throw new \Exception('Stok tidak mencukupi! Sisa stok: ' . $produk->stok);
+                }
 
                 $item->update([
                     'kuantitas' => $request->quantity,
                     'subtotal'  => $request->quantity * $item->harga_satuan,
                 ]);
 
-                $item->penjualan->update([
-                    'total_pembayaran' => $item->penjualan->itemPenjualan()->sum('subtotal'),
+                $sale->update([
+                    'total_pembayaran' => $sale->itemPenjualan()->sum('subtotal'),
                 ]);
             });
 
@@ -109,15 +120,15 @@ class ItemPenjualanController extends Controller
         try {
             DB::transaction(function () use ($itempenjualan) {
                 $sale = $itempenjualan->penjualan;
-
-                // Jika stok sudah dikurangi saat tambah, kembalikan di sini:
-                // $itempenjualan->produk?->increment('stok', $itempenjualan->kuantitas);
-
+                if ($sale && $sale->status !== 'OPEN') {
+                    throw new \Exception('Transaksi sudah diproses.');
+                }
                 $itempenjualan->delete();
-
-                $sale->update([
-                    'total_pembayaran' => $sale->itemPenjualan()->sum('subtotal'),
-                ]);
+                if ($sale) {
+                    $sale->update([
+                        'total_pembayaran' => $sale->itemPenjualan()->sum('subtotal'),
+                    ]);
+                }
             });
 
             return back()->with('success', 'Item dihapus dari keranjang.');

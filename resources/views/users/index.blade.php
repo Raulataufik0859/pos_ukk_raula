@@ -72,10 +72,17 @@
                                 </td>
                                 <td class="px-5 py-4">
                                     <div class="flex items-center gap-3">
-                                        <div
-                                            class="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-semibold shrink-0">
-                                            {{ strtoupper(substr($user->name, 0, 1)) }}
-                                        </div>
+                                        @php
+                                            $hasAv = $user->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar);
+                                        @endphp
+                                        @if($hasAv)
+                                            <img src="{{ asset('storage/'.$user->avatar) }}" alt=""
+                                                 class="w-9 h-9 rounded-full object-cover shrink-0 ring-2 ring-indigo-500/30">
+                                        @else
+                                            <div class="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-semibold shrink-0">
+                                                {{ strtoupper(substr($user->name, 0, 1)) }}
+                                            </div>
+                                        @endif
                                         <span class="font-medium text-gray-900 dark:text-white">{{ $user->name }}</span>
                                     </div>
                                 </td>
@@ -97,7 +104,7 @@
                                     <div class="flex items-center justify-center gap-2">
                                         @if (!$isAdmin)
                                             <a href="{{ url('/admin/users/edit/' . $user->id) }}"
-                                                class="inline-flex px-2.5 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300 transition">
+                                                class="inline-flex px-2.5 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition shadow-sm">
                                                 Edit
                                             </a>
                                             <form action="{{ url('/admin/users/destroy/' . $user->id) }}" method="POST"
@@ -105,12 +112,12 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"
-                                                    class="inline-flex px-2.5 py-1.5 text-xs font-medium rounded-lg bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 transition">
+                                                    class="inline-flex px-2.5 py-1.5 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-500 transition shadow-sm">
                                                     Hapus
                                                 </button>
                                             </form>
                                         @else
-                                            <span class="text-xs text-gray-400 italic">Tidak dapat diubah</span>
+                                            <span class="text-xs text-gray-400 italic">Tidak dapat diedit/dihapus</span>
                                         @endif
                                     </div>
                                 </td>

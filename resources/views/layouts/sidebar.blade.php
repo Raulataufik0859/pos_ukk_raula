@@ -2,7 +2,8 @@
     $user = auth()->user();
     $roleName = strtolower($user->role->name ?? '');
     $isAdmin = $roleName === 'admin';
-    $avatarUrl = $user->avatar ? asset('storage/'.$user->avatar) : null;
+    $hasAvatar = $user->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar);
+    $avatarUrl = $hasAvatar ? asset('storage/'.$user->avatar) : null;
 @endphp
 
 <aside id="sidebar"

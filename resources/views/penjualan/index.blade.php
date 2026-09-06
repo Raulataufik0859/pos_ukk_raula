@@ -9,7 +9,7 @@
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Halaman Penjualan</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Daftar transaksi penjualan</p>
         </div>
-        <a href="{{ route('penjualan.create') }}"
+        <a href="{{ route('penjualan.create', ['baru' => 1]) }}"
            class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition shadow-sm">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -96,34 +96,46 @@
             <td class="px-5 py-4 text-center">
                 @php
                     $status = strtoupper($penjualan->status ?? 'OPEN');
-                    $statusClass = $status === 'COMPLETED'
-                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                        : 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
+                    $statusClass = match($status) {
+                        'COMPLETED' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+                        'PENDING'   => 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+                        default     => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+                    };
                 @endphp
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ $statusClass }}">
-                    <span class="w-1.5 h-1.5 rounded-full {{ $status === 'COMPLETED' ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
+                    <span class="w-1.5 h-1.5 rounded-full {{ in_array($status, ['COMPLETED'], true) ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
                     {{ $status }}
                 </span>
             </td>
             <td class="px-5 py-4">
-                <div class="flex items-center justify-center gap-2">
+                <div class="flex items-center justify-center gap-2 flex-wrap">
                     <a href="{{ route('penjualan.show', $penjualan) }}"
-                       class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 transition">
+                       class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition shadow-sm">
                         Detail
                     </a>
-
-                    @if($status !== 'COMPLETED')
+                    @if($status === 'OPEN')
                         <a href="{{ route('penjualan.edit', $penjualan) }}"
-                           class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300 transition">
+                           class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition shadow-sm">
                             Lanjutkan
                         </a>
                         <form action="{{ route('penjualan.destroy', $penjualan) }}" method="POST"
-                              onsubmit="return confirm('Yakin hapus transaksi ini?')">
+                              onsubmit="return confirm('Batalkan transaksi ini?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit"
-                                    class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 transition">
-                                Hapus
+                                    class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-500 transition shadow-sm">
+                                Batal
+                            </button>
+                        </form>
+                    @elseif($status === 'PENDING')
+                        {{-- PENDING: hanya Detail + Batal (tanpa Lanjutkan) --}}
+                        <form action="{{ route('penjualan.destroy', $penjualan) }}" method="POST"
+                              onsubmit="return confirm('Batalkan transaksi transfer PENDING ini?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit"
+                                    class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-500 transition shadow-sm">
+                                Batal
                             </button>
                         </form>
                     @endif

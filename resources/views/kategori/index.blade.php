@@ -49,8 +49,7 @@
                                 <div class="flex items-center justify-center gap-2">
                                     <a href="{{ route('kategori.edit', $kategori) }}"
                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg
-                                              bg-amber-50 text-amber-700 hover:bg-amber-100
-                                              dark:bg-amber-900/30 dark:text-amber-300 transition">
+                                              bg-blue-600 text-white hover:bg-blue-500 transition">
                                         Edit
                                     </a>
                                     <form action="{{ route('kategori.destroy', $kategori) }}" method="POST"
@@ -59,8 +58,7 @@
                                         @method('DELETE')
                                         <button type="submit"
                                                 class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg
-                                                       bg-red-50 text-red-700 hover:bg-red-100
-                                                       dark:bg-red-900/30 dark:text-red-300 transition">
+                                                       bg-rose-600 text-white hover:bg-rose-500 transition">
                                             Hapus
                                         </button>
                                     </form>

@@ -1,3 +1,4 @@
+@php $isAdmin = strtolower(auth()->user()->role->name ?? '') === 'admin'; @endphp
 @extends('layouts.app')
 
 @section('content')
@@ -9,13 +10,13 @@
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Halaman Produk</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Kelola data produk, harga, dan stok barang</p>
         </div>
-        <a href="{{ route('produk.create') }}"
+        @if($isAdmin)<a href="{{ route('produk.create') }}"
            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition shadow-sm">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
             Tambah Produk
-        </a>
+        </a>@endif
     </div>
 
     {{-- Search --}}
@@ -56,7 +57,7 @@
                         <th class="px-5 py-3.5 font-semibold text-right min-w-[130px]">Harga Beli</th>
                         <th class="px-5 py-3.5 font-semibold text-right min-w-[130px]">Harga Jual</th>
                         <th class="px-5 py-3.5 font-semibold text-center w-24">Stok</th>
-                        <th class="px-5 py-3.5 font-semibold text-center w-36">Aksi</th>
+                        @if($isAdmin)<th class="px-5 py-3.5 font-semibold text-center w-36">Aksi</th>@endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -109,19 +110,19 @@
                             <td class="px-5 py-4 text-center">
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
                                     {{ $product->stok <= 10
-                                        ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                        ? 'bg-rose-600 text-white dark:bg-red-900/30 dark:text-red-300'
                                         : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' }}">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $product->stok <= 10 ? 'bg-red-500' : 'bg-emerald-500' }}"></span>
                                     {{ $product->stok }}
                                 </span>
                             </td>
 
+                            @if($isAdmin)
                             <td class="px-5 py-4">
                                 <div class="flex items-center justify-center gap-2">
                                     <a href="{{ route('produk.edit', $product) }}"
                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg
-                                              bg-amber-50 text-amber-700 hover:bg-amber-100
-                                              dark:bg-amber-900/30 dark:text-amber-300 transition">
+                                              bg-blue-600 text-white hover:bg-blue-500 transition">
                                         Edit
                                     </a>
                                     <form action="{{ route('produk.destroy', $product) }}" method="POST"
@@ -130,13 +131,13 @@
                                         @method('DELETE')
                                         <button type="submit"
                                                 class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg
-                                                       bg-red-50 text-red-700 hover:bg-red-100
-                                                       dark:bg-red-900/30 dark:text-red-300 transition">
+                                                       bg-rose-600 text-white hover:bg-rose-500 transition">
                                             Hapus
                                         </button>
                                     </form>
                                 </div>
                             </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>

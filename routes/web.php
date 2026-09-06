@@ -8,100 +8,57 @@ use App\Http\Controllers\PenjualanController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\KategoriController;
-use App\Http\Controllers\PemasokController;
-use App\Http\Controllers\PembelianController;
-use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ProfileController;
 
-/*
-|--------------------------------------------------------------------------
-| Guest Routes (belum login)
-|--------------------------------------------------------------------------
-*/
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'index'])->name('login');
     Route::post('/auth', [AuthController::class, 'auth'])->name('auth');
-
-    // Lupa Password
     Route::get('/forgot-password', [AuthController::class, 'showForgotForm'])->name('password.request');
     Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Authenticated Routes (sudah login)
-|--------------------------------------------------------------------------
-*/
 Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    /*
-    |--------------------------------------------------------------------------
-    | Profil (semua role yang sudah login)
-    |--------------------------------------------------------------------------
-    */
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    /*
-    |--------------------------------------------------------------------------
-    | Admin Only - Pengguna
-    |--------------------------------------------------------------------------
-    */
-    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/users', [PenggunaController::class, 'index'])->name('users');
-        Route::get('/users/create', [PenggunaController::class, 'create'])->name('users.create');
-        Route::post('/users/store', [PenggunaController::class, 'store'])->name('users.store');
-        Route::get('/users/edit/{user}', [PenggunaController::class, 'edit'])->name('users.edit');
-        Route::post('/users/update/{user}', [PenggunaController::class, 'update'])->name('users.update');
-        Route::delete('/users/destroy/{user}', [PenggunaController::class, 'destroy'])->name('users.destroy');
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Laporan
-    |--------------------------------------------------------------------------
-    */
-    Route::prefix('laporan')->name('laporan.')->group(function () {
-        Route::get('/', [LaporanController::class, 'index'])->name('index');
-        Route::get('/penjualan', [LaporanController::class, 'penjualan'])->name('penjualan');
-        Route::get('/pembelian', [LaporanController::class, 'pembelian'])->name('pembelian');
-        Route::get('/stok', [LaporanController::class, 'stok'])->name('stok');
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Admin Only - Kategori Produk
-    |--------------------------------------------------------------------------
-    */
     Route::middleware('role:admin')->group(function () {
+        Route::prefix('admin')->name('admin.')->group(function () {
+            Route::get('/users', [PenggunaController::class, 'index'])->name('users');
+            Route::get('/users/create', [PenggunaController::class, 'create'])->name('users.create');
+            Route::post('/users/store', [PenggunaController::class, 'store'])->name('users.store');
+            Route::get('/users/edit/{user}', [PenggunaController::class, 'edit'])->name('users.edit');
+            Route::post('/users/update/{user}', [PenggunaController::class, 'update'])->name('users.update');
+            Route::delete('/users/destroy/{user}', [PenggunaController::class, 'destroy'])->name('users.destroy');
+        });
+
         Route::resource('kategori', KategoriController::class);
+
+        Route::get('/produk/create', [ProdukController::class, 'create'])->name('produk.create');
+        Route::post('/produk', [ProdukController::class, 'store'])->name('produk.store');
+        Route::get('/produk/{produk}/edit', [ProdukController::class, 'edit'])->name('produk.edit');
+        Route::put('/produk/{produk}', [ProdukController::class, 'update'])->name('produk.update');
+        Route::patch('/produk/{produk}', [ProdukController::class, 'update']);
+        Route::delete('/produk/{produk}', [ProdukController::class, 'destroy'])->name('produk.destroy');
+
+        // Konfirmasi transfer (admin only)
+        Route::post('/penjualan/{penjualan}/confirm-transfer', [PenjualanController::class, 'confirmTransfer'])
+            ->name('penjualan.confirm-transfer');
+        Route::post('/penjualan/{penjualan}/reject-transfer', [PenjualanController::class, 'rejectTransfer'])
+            ->name('penjualan.reject-transfer');
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | Admin & Kasir
-    |--------------------------------------------------------------------------
-    */
     Route::middleware('role:admin,kasir')->group(function () {
+        Route::get('/produk', [ProdukController::class, 'index'])->name('produk.index');
+        Route::get('/produk/{produk}', [ProdukController::class, 'show'])->name('produk.show');
 
-        // Produk
-        Route::resource('produk', ProdukController::class);
-
-        // Penjualan
         Route::resource('penjualan', PenjualanController::class);
 
-        // Pemasok
-        Route::resource('pemasok', PemasokController::class);
-
-        // Pembelian
-        Route::resource('pembelian', PembelianController::class)->except(['edit', 'update']);
-
-        // Item Penjualan
         Route::resource('itempenjualan', ItemPenjualanController::class)->only([
             'store', 'update', 'destroy'
         ]);

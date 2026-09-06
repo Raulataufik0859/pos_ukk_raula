@@ -7,7 +7,7 @@
         <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Ringkasan performa toko hari ini</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ !empty($isKasir) ? 'Ringkasan transaksi Anda hari ini' : 'Ringkasan performa toko hari ini' }}</p>
             </div>
             <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>

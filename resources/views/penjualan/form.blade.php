@@ -1,7 +1,19 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    // Tetap di transaksi yang sama saat cari/filter kategori
+    $formAction = route('penjualan.edit', $sale->id);
+@endphp
+
 <div class="p-3 lg:p-4 h-[calc(100vh-72px)] flex flex-col overflow-hidden">
+    <div class="mb-2 shrink-0 no-print flex justify-end">
+        <a href="{{ route('penjualan.index') }}"
+           class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+            ← Kembali
+        </a>
+    </div>
+
 
     @if(session('success'))
         <div class="mb-2 p-3 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl text-sm shrink-0">{{ session('success') }}</div>
@@ -17,12 +29,12 @@
 
             {{-- Search + Category Tabs --}}
             <div class="p-3 border-b border-gray-200 dark:border-gray-700 space-y-3 shrink-0">
-                <form method="GET" action="{{ route('penjualan.create') }}" class="relative" id="search-form">
+                <form method="GET" action="{{ $formAction }}" class="relative" id="search-form">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                     <input type="text" name="search" value="{{ request('search') }}" id="search-input"
-                           placeholder="Cari menu..."
+                           placeholder="Cari nama produk atau kategori..."
                            class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                            autofocus>
                     @if(request('kategori'))
@@ -32,13 +44,13 @@
 
                 {{-- Category tabs --}}
                 <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                    <a href="{{ route('penjualan.create', array_filter(['search' => request('search')])) }}"
+                    <a href="{{ route('penjualan.edit', array_filter(['penjualan' => $sale->id, 'search' => request('search')])) }}"
                        class="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition
                        {{ !request('kategori') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
                         Semua
                     </a>
                     @foreach(($kategoris ?? collect()) as $kat)
-                        <a href="{{ route('penjualan.create', array_filter(['kategori' => $kat->id, 'search' => request('search')])) }}"
+                        <a href="{{ route('penjualan.edit', array_filter(['penjualan' => $sale->id, 'kategori' => $kat->id, 'search' => request('search')])) }}"
                            class="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition
                            {{ request('kategori') == $kat->id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
                             {{ $kat->nama }}
@@ -53,6 +65,7 @@
                     @forelse($products as $product)
                         <form method="POST" action="{{ route('itempenjualan.store') }}" class="group">
                             @csrf
+                            <input type="hidden" name="penjualan_id" value="{{ $sale->id }}">
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
                             <input type="hidden" name="quantity" value="1">
 
@@ -143,18 +156,18 @@
                                     Rp {{ number_format($item->harga_satuan, 0, ',', '.') }}
                                 </p>
                                 <div class="flex items-center gap-2 mt-1.5">
-                                    <form method="POST" action="{{ route('itempenjualan.update', $item->id) }}" class="flex items-center gap-1">
+                                    <form method="POST" action="{{ route('itempenjualan.update', $item->id) }}" class="flex items-center gap-1 qty-form">
                                         @csrf
                                         @method('PUT')
-                                        <button type="button" onclick="this.parentElement.querySelector('input').stepDown(); this.parentElement.submit();"
-                                                class="w-6 h-6 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold hover:bg-gray-300"
+                                        <button type="button" class="w-6 h-6 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold hover:bg-gray-300 dark:hover:bg-gray-600"
+                                                onclick="ubahQty(this, -1)"
                                                 {{ $sale->status === 'COMPLETED' ? 'disabled' : '' }}>−</button>
                                         <input type="number" name="quantity" value="{{ $item->kuantitas }}" min="1"
-                                               class="w-10 px-1 py-0.5 text-center text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                                               class="w-10 px-1 py-0.5 text-center text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                                onchange="this.form.submit()"
                                                {{ $sale->status === 'COMPLETED' ? 'readonly' : '' }}>
-                                        <button type="button" onclick="this.parentElement.querySelector('input').stepUp(); this.parentElement.submit();"
-                                                class="w-6 h-6 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold hover:bg-gray-300"
+                                        <button type="button" class="w-6 h-6 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold hover:bg-gray-300 dark:hover:bg-gray-600"
+                                                onclick="ubahQty(this, 1)"
                                                 {{ $sale->status === 'COMPLETED' ? 'disabled' : '' }}>+</button>
                                     </form>
                                     <form method="POST" action="{{ route('itempenjualan.destroy', $item->id) }}">
@@ -264,11 +277,11 @@
 
                         <div id="payment-qris" class="hidden">
                             <div class="p-4 pb-5 text-center">
-                                <div class="inline-block bg-white p-2 rounded-xl cursor-pointer" onclick="openQrisModal()" title="Klik untuk perbesar">
+                                <div class="inline-block bg-white p-2 rounded-xl cursor-pointer" onclick="openQrisModal()" title="Ketuk untuk memperbesar">
                                     <img src="{{ asset('imageqris/qris-allpay.jpg') }}" alt="QRIS"
                                          class="w-52 h-52 object-contain mx-auto" onerror="this.src='{{ asset('imageqris/qris') }}'">
                                 </div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">Scan QR untuk membayar</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">Scan QR untuk membayar · <button type="button" onclick="openQrisModal()" class="text-indigo-600 hover:underline">Ketuk untuk memperbesar</button></p>
                             </div>
                         </div>
 
@@ -285,6 +298,17 @@
                                     <option value="Mandiri">Mandiri</option>
                                 </select>
                             </div>
+                            
+                            <div class="mt-3">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nama Pengirim <span class="text-gray-400 font-normal">(opsional)</span></label>
+                                <input type="text" id="nama-pengirim" name="nama_pengirim_ui" placeholder="Nama sesuai rekening pengirim"
+                                       class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                                <p class="text-xs text-gray-400 mt-1">Untuk pencocokan mutasi bank</p>
+                            </div>
+                            <div class="mt-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200">
+                                Transfer tidak langsung lunas. Status menjadi <strong>PENDING</strong> sampai admin mengonfirmasi dana masuk.
+                            </div>
+
                             <div id="info-rekening" class="hidden p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Transfer ke rekening:</p>
                                 <p class="font-bold text-gray-900 dark:text-white text-lg" id="nomor-rekening">-</p>
@@ -319,7 +343,8 @@
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="metode_pembayaran" id="final-metode" value="">
-                        <input type="hidden" name="bank" id="final-bank" value="">
+                        <input type="hidden" name="bank_transfer" id="final-bank" value="">
+                        <input type="hidden" name="nama_pengirim" id="final-pengirim" value="">
                         <input type="hidden" name="uang_diterima" id="final-uang" value="">
                         <input type="hidden" name="status" value="COMPLETED">
                         <button type="submit" id="btn-konfirmasi" disabled
@@ -376,6 +401,11 @@ function hitungKembalian() {
 }
 
 function goToPayment(method) {
+    const itemCount = {{ (int) $sale->itemPenjualan->count() }};
+    if (itemCount < 1) {
+        alert('Keranjang masih kosong. Silakan pilih produk terlebih dahulu.');
+        return;
+    }
     document.getElementById('cart-view').classList.add('hidden');
     document.getElementById('payment-view').classList.remove('hidden');
     document.getElementById('payment-qris').classList.add('hidden');
@@ -399,6 +429,16 @@ function goToPayment(method) {
     }
 }
 
+function ubahQty(btn, delta) {
+    const form = btn.closest('form');
+    const input = form.querySelector('input[name="quantity"]');
+    let val = parseInt(input.value, 10) || 1;
+    val = val + delta;
+    if (val < 1) val = 1;
+    input.value = val;
+    form.submit();
+}
+
 function backToCart() {
     document.getElementById('payment-view').classList.add('hidden');
     document.getElementById('cart-view').classList.remove('hidden');
@@ -406,8 +446,27 @@ function backToCart() {
 
 function openQrisModal() {
     const img = document.querySelector('#payment-qris img');
-    if (img) window.open(img.src, '_blank');
+    const modal = document.getElementById('qris-lightbox');
+    const modalImg = document.getElementById('qris-lightbox-img');
+    if (!img || !modal || !modalImg) {
+        console.warn('QRIS modal elements not found');
+        return;
+    }
+    modalImg.src = img.getAttribute('src') || img.src;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
 }
+function closeQrisModal() {
+    const modal = document.getElementById('qris-lightbox');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeQrisModal();
+});
 
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('final-checkout-form');
@@ -427,8 +486,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('final-uang').value = diterima;
             }
             document.getElementById('final-bank').value = bank;
+            const np = document.getElementById('nama-pengirim');
+            if (document.getElementById('final-pengirim')) document.getElementById('final-pengirim').value = np ? np.value : '';
         });
     }
 });
 </script>
+
+{{-- Lightbox QRIS: perbesar tanpa pindah halaman --}}
+<div id="qris-lightbox"
+     class="hidden fixed inset-0 z-[9999] items-center justify-center bg-black/75 p-4"
+     onclick="closeQrisModal()">
+    <div class="relative bg-white dark:bg-gray-900 rounded-2xl p-5 max-w-md w-full shadow-2xl"
+         onclick="event.stopPropagation()">
+        <button type="button" onclick="closeQrisModal()"
+                class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 text-xl leading-none font-bold"
+                aria-label="Tutup">×</button>
+        <img id="qris-lightbox-img" src="" alt="QRIS diperbesar"
+             class="w-full max-h-[70vh] object-contain rounded-xl mx-auto">
+        <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-3">
+            Ketuk di luar gambar atau tombol × untuk menutup
+        </p>
+    </div>
+</div>
+
 @endsection
