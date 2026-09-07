@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/avatar/delete', [ProfileController::class, 'deleteAvatar'])->name('profile.avatar.destroy');
 
     Route::middleware('role:admin')->group(function () {
         Route::prefix('admin')->name('admin.')->group(function () {

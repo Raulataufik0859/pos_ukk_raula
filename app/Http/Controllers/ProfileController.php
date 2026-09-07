@@ -23,16 +23,15 @@ class ProfileController extends Controller
             'name'     => 'required|string|max:100',
             'email'    => 'required|email|max:150|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6|confirmed',
-            'avatar'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'avatar'   => 'nullable|file|mimes:jpeg,jpg,png,webp,gif|max:4096',
         ], [
             'name.required'      => 'Nama wajib diisi.',
             'email.required'     => 'Email wajib diisi.',
             'email.unique'       => 'Email sudah digunakan.',
             'password.min'       => 'Password minimal 6 karakter.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
-            'avatar.image'       => 'File harus berupa gambar.',
-            'avatar.mimes'       => 'Format gambar: jpg, jpeg, png, webp.',
-            'avatar.max'         => 'Ukuran gambar maksimal 2MB.',
+            'avatar.mimes'       => 'Format gambar: jpg, jpeg, png, webp, gif.',
+            'avatar.max'         => 'Ukuran gambar maksimal 4MB.',
         ]);
 
         $data = [
@@ -44,16 +43,12 @@ class ProfileController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
-        // Hapus avatar
-        if ($request->input('remove_avatar') == '1') {
+        if ($request->boolean('remove_avatar') || $request->input('remove_avatar') === '1') {
             if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
                 Storage::disk('public')->delete($user->avatar);
             }
             $data['avatar'] = null;
-        }
-
-        // Upload avatar baru
-        if ($request->hasFile('avatar')) {
+        } elseif ($request->hasFile('avatar')) {
             if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
                 Storage::disk('public')->delete($user->avatar);
             }
@@ -61,9 +56,29 @@ class ProfileController extends Controller
         }
 
         $user->update($data);
+        $user->refresh();
+        Auth::setUser($user);
 
         return redirect()
             ->route('profile.show')
             ->with('success', 'Profil berhasil diperbarui.');
+    }
+
+    public function deleteAvatar(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($user->avatar) {
+            if (Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $user->forceFill(['avatar' => null])->save();
+            $user->refresh();
+            Auth::setUser($user);
+        }
+
+        return redirect()
+            ->route('profile.show')
+            ->with('success', 'Foto profil berhasil dihapus.');
     }
 }

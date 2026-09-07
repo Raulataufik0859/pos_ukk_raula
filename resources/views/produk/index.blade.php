@@ -129,6 +129,7 @@
                                           onsubmit="return confirm('Yakin hapus produk ini?')">
                                         @csrf
                                         @method('DELETE')
+                                        <input type="hidden" name="return_query" value="{{ http_build_query(request()->query()) }}">
                                         <button type="submit"
                                                 class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg
                                                        bg-rose-600 text-white hover:bg-rose-500 transition">

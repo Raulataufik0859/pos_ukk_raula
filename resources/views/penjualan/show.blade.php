@@ -29,8 +29,7 @@
                 @endif
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {{ $penjualan->created_at->translatedFormat('l, d F Y') }} •
-                <span class="nota-clock font-medium text-indigo-600 dark:text-indigo-400">{{ $penjualan->created_at->format('H:i:s') }}</span> WIB
+                {{ $penjualan->created_at->translatedFormat('l, d F Y • H:i') }} WIB
             </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
@@ -111,10 +110,9 @@
 
         <div class="px-6 py-4 text-sm space-y-1.5 border-b border-dashed border-gray-200 dark:border-gray-700">
             <div class="flex justify-between">
-                <span class="text-gray-500 dark:text-gray-400">Tanggal</span>
+                <span class="text-gray-500 dark:text-gray-400">Tanggal & Waktu</span>
                 <span class="font-medium text-gray-900 dark:text-white">
-                    {{ $penjualan->created_at->format('d/m/Y') }}
-                    <span class="nota-clock">{{ $penjualan->created_at->format('H:i:s') }}</span>
+                    {{ $penjualan->created_at->format('d/m/Y H:i') }} WIB
                 </span>
             </div>
             <div class="flex justify-between">
@@ -125,12 +123,13 @@
                 <span class="text-gray-500 dark:text-gray-400">Metode</span>
                 <span class="font-medium text-gray-900 dark:text-white">{{ $penjualan->metode_pembayaran }}</span>
             </div>
+            {{-- Internal: tampil di Detail Admin, disembunyikan saat Cetak Struk --}}
             @if(strtoupper($penjualan->metode_pembayaran) === 'TRANSFER')
-            <div class="flex justify-between">
+            <div class="flex justify-between no-print">
                 <span class="text-gray-500 dark:text-gray-400">Bank Tujuan</span>
                 <span class="font-medium text-gray-900 dark:text-white">{{ $penjualan->bank_transfer ?: '-' }}</span>
             </div>
-            <div class="flex justify-between">
+            <div class="flex justify-between no-print">
                 <span class="text-gray-500 dark:text-gray-400">Nama Pengirim</span>
                 <span class="font-medium text-gray-900 dark:text-white">{{ $penjualan->nama_pengirim ?: '-' }}</span>
             </div>
@@ -191,7 +190,7 @@
             @endif
             <br>
             <span class="font-medium text-gray-500 dark:text-gray-400">POS Raula &copy; {{ date('Y') }}</span>
-            <p class="mt-1">Waktu: <span class="nota-clock">--:--:--</span> WIB</p>
+            <p class="mt-1 no-print-label">Dicetak pada: <span class="print-clock">--:--:--</span> WIB</p>
         </div>
     </div>
 </div>
@@ -206,6 +205,7 @@
         border: none !important; box-shadow: none !important; border-radius: 0 !important;
     }
     .no-print { display: none !important; }
+    #nota-area .no-print { display: none !important; visibility: hidden !important; height: 0 !important; overflow: hidden !important; }
 }
 </style>
 
@@ -217,12 +217,13 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 @endif
 <script>
-function updateNotaClock() {
+// Waktu transaksi = data DB (tetap). Hanya "Dicetak pada" yang realtime saat halaman dibuka.
+function updatePrintClock() {
     const now = new Date();
     const s = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    document.querySelectorAll('.nota-clock').forEach(el => el.textContent = s);
+    document.querySelectorAll('.print-clock').forEach(el => el.textContent = s);
 }
-updateNotaClock();
-setInterval(updateNotaClock, 1000);
+updatePrintClock();
+setInterval(updatePrintClock, 1000);
 </script>
 @endsection

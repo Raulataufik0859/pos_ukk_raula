@@ -39,9 +39,4 @@ class Produk extends Model
     {
         return $this->hasMany(ItemPenjualan::class, 'produk_id');
     }
-
-    public function detailPenjualans(): HasMany
-    {
-        return $this->hasMany(DetailPenjualan::class, 'produk_id');
-    }
 }

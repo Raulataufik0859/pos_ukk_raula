@@ -81,13 +81,20 @@
 
             <td class="px-5 py-4 text-center">
                 @php
-                    $metode = strtoupper($penjualan->metode_pembayaran ?? '-');
-                    $metodeClass = match($metode) {
-                        'CASH' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-                        'QRIS' => 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-                        'TRANSFER' => 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-                        default => 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
-                    };
+                    $statusRow = strtoupper($penjualan->status ?? 'OPEN');
+                    // OPEN: metode belum dipilih. PENDING/COMPLETED: tampilkan metode asli.
+                    if ($statusRow === 'OPEN') {
+                        $metode = 'Belum dipilih';
+                        $metodeClass = 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400';
+                    } else {
+                        $metode = strtoupper($penjualan->metode_pembayaran ?? '-');
+                        $metodeClass = match($metode) {
+                            'CASH' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+                            'QRIS' => 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+                            'TRANSFER' => 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+                            default => 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
+                        };
+                    }
                 @endphp
                 <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium {{ $metodeClass }}">
                     {{ $metode }}
@@ -122,6 +129,7 @@
                               onsubmit="return confirm('Batalkan transaksi ini?')">
                             @csrf
                             @method('DELETE')
+                                        <input type="hidden" name="return_query" value="{{ http_build_query(request()->query()) }}">
                             <button type="submit"
                                     class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-500 transition shadow-sm">
                                 Batal
@@ -133,6 +141,7 @@
                               onsubmit="return confirm('Batalkan transaksi transfer PENDING ini?')">
                             @csrf
                             @method('DELETE')
+                                        <input type="hidden" name="return_query" value="{{ http_build_query(request()->query()) }}">
                             <button type="submit"
                                     class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-500 transition shadow-sm">
                                 Batal

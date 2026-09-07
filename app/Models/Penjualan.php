@@ -30,9 +30,4 @@ class Penjualan extends Model
     {
         return $this->hasMany(ItemPenjualan::class, 'penjualan_id');
     }
-
-    public function detailPenjualans()
-    {
-        return $this->hasMany(DetailPenjualan::class, 'penjualan_id');
-    }
 }

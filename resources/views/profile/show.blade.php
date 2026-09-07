@@ -4,9 +4,8 @@
 @section('header', 'Profil Saya')
 
 @section('content')
-
 <style>
-#avatar-box, #avatar-box img {
+#avatar-box {
   width: 7rem !important;
   height: 7rem !important;
   min-width: 7rem !important;
@@ -14,16 +13,34 @@
   max-width: 7rem !important;
   max-height: 7rem !important;
   border-radius: 9999px !important;
-  object-fit: cover !important;
   overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
 }
-#avatar-lightbox-img {
-  max-height: 70vh;
-  width: auto;
-  max-width: 100%;
-  margin: 0 auto;
-  border-radius: 1rem;
-  object-fit: contain;
+#avatar-box img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 9999px !important;
+}
+#avatar-fallback {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 9999px !important;
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  line-height: 1 !important;
+}
+#avatar-fallback.hidden {
+  display: none !important;
 }
 </style>
 
@@ -84,7 +101,7 @@
                     <div class="px-6 pb-6 -mt-14 text-center">
                         <div class="relative inline-block">
                             {{-- Avatar circle --}}
-                            <div id="avatar-box" style="width:7rem;height:7rem;min-width:7rem;min-height:7rem;max-width:7rem;max-height:7rem;" class="cursor-pointer" onclick="if(document.getElementById('avatar-preview') && !document.getElementById('avatar-preview').classList.contains('hidden')){openAvatarLightbox()}"
+                            <div id="avatar-box" class="cursor-pointer w-28 h-28 rounded-full overflow-hidden ring-4 ring-white dark:ring-gray-900 shadow-xl mx-auto" onclick="if(document.getElementById('avatar-preview') && !document.getElementById('avatar-preview').classList.contains('hidden')){openAvatarLightbox()}"
                                  class="w-28 h-28 rounded-full overflow-hidden ring-4 ring-white dark:ring-gray-900 shadow-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center mx-auto">
                                 @if($avatarUrl)
                                     <img src="{{ $avatarUrl }}" alt="Foto profil"
@@ -117,6 +134,14 @@
                             {{ $roleName }}
                         </span>
                         <p class="text-xs text-gray-400 mt-3">Klik ikon kamera untuk ganti foto</p>
+
+                        @if($user->avatar)
+                        <button type="button" id="btn-hapus-foto"
+                                class="mt-2 text-sm font-semibold text-rose-500 hover:text-rose-400">
+                            Hapus Foto
+                        </button>
+                        @endif
+
                     </div>
 
                     <div class="border-t border-gray-100 dark:border-gray-800 px-6 py-4 space-y-2 text-sm">
@@ -213,11 +238,8 @@
                                 Batal
                             </a>
                             @if($hasAvatar)
-                            <button type="button" id="btn-remove-avatar"
-                                    class="px-5 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition ml-auto">
-                                Hapus Foto
-                            </button>
-                            <input type="hidden" name="remove_avatar" id="remove_avatar" value="0">
+                            
+                            
                             @endif
                         </div>
                     </div>
@@ -258,16 +280,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('remove_avatar')?.setAttribute('value', '0');
     });
 
-    document.getElementById('btn-remove-avatar')?.addEventListener('click', function () {
-        if (!confirm('Hapus foto profil?')) return;
-        document.getElementById('remove_avatar').value = '1';
-        if (preview) {
-            preview.src = '';
-            preview.classList.add('hidden');
-        }
-        if (fallback) fallback.classList.remove('hidden');
-        if (input) input.value = '';
-    });
+    
 });
 </script>
 
@@ -293,6 +306,33 @@ function closeAvatarLightbox(){
   document.body.style.overflow='';
 }
 document.getElementById('avatar-preview')?.addEventListener('click', function(e){ e.stopPropagation(); openAvatarLightbox(); });
+</script>
+
+
+<script>
+(function () {
+    const btn = document.getElementById('btn-hapus-foto');
+    if (!btn) return;
+    btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!confirm('Hapus foto profil?')) return;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = @json(route('profile.avatar.destroy'));
+        form.style.display = 'none';
+
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = '_token';
+        csrf.value = @json(csrf_token());
+        form.appendChild(csrf);
+
+        document.body.appendChild(form);
+        form.submit();
+    });
+})();
 </script>
 
 @endsection

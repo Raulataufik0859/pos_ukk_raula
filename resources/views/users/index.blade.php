@@ -111,6 +111,7 @@
                                                 onsubmit="return confirm('Yakin hapus {{ $user->name }}?')">
                                                 @csrf
                                                 @method('DELETE')
+                                        <input type="hidden" name="return_query" value="{{ http_build_query(request()->query()) }}">
                                                 <button type="submit"
                                                     class="inline-flex px-2.5 py-1.5 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-500 transition shadow-sm">
                                                     Hapus

@@ -46,13 +46,13 @@
                 <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                     <a href="{{ route('penjualan.edit', array_filter(['penjualan' => $sale->id, 'search' => request('search')])) }}"
                        class="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition
-                       {{ !request('kategori') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                       {{ empty($kategoriId ?? request('kategori')) ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
                         Semua
                     </a>
                     @foreach(($kategoris ?? collect()) as $kat)
                         <a href="{{ route('penjualan.edit', array_filter(['penjualan' => $sale->id, 'kategori' => $kat->id, 'search' => request('search')])) }}"
                            class="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition
-                           {{ request('kategori') == $kat->id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                           {{ ($kategoriId ?? request('kategori')) == $kat->id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
                             {{ $kat->nama }}
                         </a>
                     @endforeach

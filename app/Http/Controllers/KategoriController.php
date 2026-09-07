@@ -7,26 +7,21 @@ use Illuminate\Http\Request;
 
 class KategoriController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $kategoris = Kategori::latest()->paginate(10);
+        $kategoris = Kategori::with(['user', 'produks'])
+            ->withCount('produks')
+            ->orderBy('id', 'asc')
+            ->paginate(10);
+
         return view('kategori.index', compact('kategoris'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return view('kategori.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -34,24 +29,19 @@ class KategoriController extends Controller
         ]);
 
         Kategori::create([
-            'nama' => $request->nama,
+            'nama'    => $request->nama,
+            'user_id' => auth()->id(),
         ]);
 
         return redirect()->route('kategori.index')
             ->with('success', 'Kategori berhasil ditambahkan.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Kategori $kategori)
     {
         return view('kategori.edit', compact('kategori'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Kategori $kategori)
     {
         $request->validate([
@@ -66,14 +56,22 @@ class KategoriController extends Controller
             ->with('success', 'Kategori berhasil diperbarui.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Kategori $kategori)
     {
+        if ($kategori->produks()->exists()) {
+            return redirect()->route('kategori.index')
+                ->with('error', 'Kategori tidak bisa dihapus karena masih dipakai produk.');
+        }
+
         $kategori->delete();
 
-        return redirect()->route('kategori.index')
-            ->with('success', 'Kategori berhasil dihapus.');
+        $params = [];
+        if (request()->filled('return_query')) {
+            parse_str(request()->input('return_query'), $params);
+        } elseif ($ref = request()->headers->get('referer')) {
+            $q = parse_url($ref, PHP_URL_QUERY);
+            if ($q) parse_str($q, $params);
+        }
+        return redirect()->route('kategori.index', $params)->with('success', 'Kategori berhasil dihapus.');
     }
 }

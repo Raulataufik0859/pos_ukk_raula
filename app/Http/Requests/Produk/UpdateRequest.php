@@ -14,33 +14,27 @@ class UpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'nama' => 'required|string|max:255',
-'jenis_id' => 'required|exists:kategori,id',
-            'harga_beli' => 'required|integer|min:0',
-            'harga_jual' => 'required|integer|min:0',
-            'stok' => 'required|integer|min:0',
+            'nama'       => 'required|string|max:150',
+            'jenis_id'   => 'required|exists:kategori,id',
+            'harga_beli' => 'required|numeric|min:0',
+            'harga_jual' => 'required|numeric|min:0',
+            'stok'       => 'required|integer|min:0',
+            'foto'       => 'nullable|file|mimes:jpeg,jpg,png,webp,gif|max:4096',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'foto.image' => 'File yang diupload harus gambar.',
-            'foto.mimes' => 'Ekstensi gambar harus JPG, JPEG, PNG, atau WEBP.',
-            'foto.max' => 'Maksimal ukuran gambar 2MB.',
-            'nama.required' => 'Nama produk wajib diisi.',
-            'nama.max' => 'Nama produk maksimal 255 karakter.',
-            'jenis.max' => 'Jenis produk maksimal 100 karakter.',
+            'nama.required'       => 'Nama produk wajib diisi.',
+            'jenis_id.required'   => 'Kategori wajib dipilih.',
+            'jenis_id.exists'     => 'Kategori tidak valid.',
             'harga_beli.required' => 'Harga beli wajib diisi.',
-            'harga_beli.integer' => 'Harga beli harus berupa angka.',
-            'harga_beli.min' => 'Harga beli tidak boleh negatif.',
             'harga_jual.required' => 'Harga jual wajib diisi.',
-            'harga_jual.integer' => 'Harga jual harus berupa angka.',
-            'harga_jual.min' => 'Harga jual tidak boleh negatif.',
-            'stok.required' => 'Stok wajib diisi.',
-            'stok.integer' => 'Stok harus berupa angka.',
-            'stok.min' => 'Stok tidak boleh negatif.',
+            'stok.required'       => 'Stok wajib diisi.',
+            'foto.mimes'          => 'Format foto harus JPG, JPEG, PNG, WEBP, atau GIF.',
+            'foto.max'            => 'Ukuran foto maksimal 4MB.',
+            'foto.file'           => 'File yang diupload tidak valid.',
         ];
     }
 }

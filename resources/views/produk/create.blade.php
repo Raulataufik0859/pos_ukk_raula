@@ -96,7 +96,11 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                         Foto Produk
                     </label>
-                    <input type="file" name="foto" accept="image/*"
+                    <div id="foto-preview-wrap" class="mb-3 hidden">
+                        <img id="foto-preview" src="" alt="Preview"
+                             class="w-24 h-24 object-cover rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm">
+                    </div>
+                    <input type="file" name="foto" id="foto-input" accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
                            class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                     @error('foto')
                         <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
@@ -118,4 +122,16 @@
         </form>
     </div>
 </div>
+
+<script>
+document.getElementById('foto-input')?.addEventListener('change', function () {
+    const file = this.files?.[0];
+    const wrap = document.getElementById('foto-preview-wrap');
+    const img = document.getElementById('foto-preview');
+    if (!file || !img || !wrap) return;
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; wrap.classList.remove('hidden'); };
+    reader.readAsDataURL(file);
+});
+</script>
 @endsection

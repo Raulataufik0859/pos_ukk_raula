@@ -4,25 +4,38 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Schema;
 
 class Kategori extends Model
 {
     use HasFactory;
 
-    protected $table = 'kategori';   // ← penting! karena tabel sudah di-rename
+    /**
+     * Tabel bisa "kategori" (setelah rename) atau "jenis" (belum rename).
+     */
+    public function getTable()
+    {
+        if (Schema::hasTable('kategori')) {
+            return 'kategori';
+        }
+        if (Schema::hasTable('jenis')) {
+            return 'jenis';
+        }
+        return 'kategori';
+    }
 
     protected $fillable = [
-        'nama',          // sesuaikan dengan kolom yang ada di tabel
-        // tambahkan kolom lain jika ada
+        'nama',
+        'user_id',
     ];
 
-    /**
-     * Relasi ke Produk.
-     * Catatan: di tabel produk kolom foreign key-nya bernama 'jenis_id'
-     * (bukan kategori_id), jadi kita mapping ke situ.
-     */
     public function produks()
     {
         return $this->hasMany(Produk::class, 'jenis_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

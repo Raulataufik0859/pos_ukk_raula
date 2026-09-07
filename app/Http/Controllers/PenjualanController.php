@@ -62,6 +62,28 @@ class PenjualanController extends Controller
         $keyword = $request->input('search');
         $kategoriId = $request->input('kategori');
 
+        // Jika user mengetik nama kategori di search (mis. "Makanan"), aktifkan tab kategori itu
+        if ($keyword && !$kategoriId) {
+            $matchKat = \App\Models\Kategori::where('nama', 'like', $keyword)
+                ->orWhere('nama', 'like', '%' . $keyword . '%')
+                ->orderByRaw('CASE WHEN nama LIKE ? THEN 0 ELSE 1 END', [$keyword])
+                ->first();
+            // Prioritas exact match
+            $exact = \App\Models\Kategori::whereRaw('LOWER(nama) = ?', [strtolower(trim($keyword))])->first();
+            if ($exact) {
+                $kategoriId = $exact->id;
+                // Jangan filter nama produk lagi — cukup filter kategori
+                $keyword = null;
+            } elseif ($matchKat && str_contains(strtolower($matchKat->nama), strtolower(trim($keyword)))) {
+                // Jika keyword mirip nama kategori (bukan nama produk spesifik)
+                $produkHit = Produk::where('nama', 'like', '%' . $keyword . '%')->exists();
+                if (!$produkHit) {
+                    $kategoriId = $matchKat->id;
+                    $keyword = null;
+                }
+            }
+        }
+
         $products = Produk::with('kategori')
             ->when($keyword, function ($query) use ($keyword) {
                 $query->where(function ($q) use ($keyword) {
@@ -92,7 +114,7 @@ class PenjualanController extends Controller
             ]));
         }
 
-        return view('penjualan.form', compact('sale', 'products', 'kategoris'));
+        return view('penjualan.form', compact('sale', 'products', 'kategoris', 'kategoriId'));
     }
 
     public function store(Request $request)
@@ -119,6 +141,28 @@ class PenjualanController extends Controller
         $keyword = $request->input('search');
         $kategoriId = $request->input('kategori');
 
+        // Jika user mengetik nama kategori di search (mis. "Makanan"), aktifkan tab kategori itu
+        if ($keyword && !$kategoriId) {
+            $matchKat = \App\Models\Kategori::where('nama', 'like', $keyword)
+                ->orWhere('nama', 'like', '%' . $keyword . '%')
+                ->orderByRaw('CASE WHEN nama LIKE ? THEN 0 ELSE 1 END', [$keyword])
+                ->first();
+            // Prioritas exact match
+            $exact = \App\Models\Kategori::whereRaw('LOWER(nama) = ?', [strtolower(trim($keyword))])->first();
+            if ($exact) {
+                $kategoriId = $exact->id;
+                // Jangan filter nama produk lagi — cukup filter kategori
+                $keyword = null;
+            } elseif ($matchKat && str_contains(strtolower($matchKat->nama), strtolower(trim($keyword)))) {
+                // Jika keyword mirip nama kategori (bukan nama produk spesifik)
+                $produkHit = Produk::where('nama', 'like', '%' . $keyword . '%')->exists();
+                if (!$produkHit) {
+                    $kategoriId = $matchKat->id;
+                    $keyword = null;
+                }
+            }
+        }
+
         $products = Produk::with('kategori')
             ->when($keyword, function ($query) use ($keyword) {
                 $query->where(function ($q) use ($keyword) {
@@ -138,7 +182,7 @@ class PenjualanController extends Controller
         $kategoris = \App\Models\Kategori::orderBy('nama')->get();
         $mode = 'edit';
 
-        return view('penjualan.form', compact('sale', 'products', 'kategoris', 'mode'));
+        return view('penjualan.form', compact('sale', 'products', 'kategoris', 'mode', 'kategoriId'));
     }
 
     public function update(Request $request, Penjualan $penjualan)
@@ -288,9 +332,14 @@ class PenjualanController extends Controller
                 $penjualan->delete();
             });
 
-            return redirect()
-                ->route('penjualan.index')
-                ->with('success', 'Transaksi berhasil dibatalkan.');
+            $params = [];
+            if (request()->filled('return_query')) {
+                parse_str(request()->input('return_query'), $params);
+            } elseif ($ref = request()->headers->get('referer')) {
+                $q = parse_url($ref, PHP_URL_QUERY);
+                if ($q) parse_str($q, $params);
+            }
+            return redirect()->route('penjualan.index', $params)->with('success', 'Transaksi berhasil dibatalkan.');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal membatalkan transaksi: ' . $e->getMessage());
         }

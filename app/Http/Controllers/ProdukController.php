@@ -25,7 +25,7 @@ class ProdukController extends Controller
                         $q->where('nama', 'like', '%' . $keyword . '%');
                     });
             })
-            ->latest()
+            ->orderBy('id', 'asc')
             ->paginate(10)
             ->withQueryString();
 
@@ -108,14 +108,19 @@ class ProdukController extends Controller
 
     public function destroy(Produk $produk)
     {
-        $this->authorize('delete', $produk);
-
         if ($produk->foto) {
-            Storage::disk('public')->delete($produk->foto);
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($produk->foto);
         }
-
         $produk->delete();
 
-        return redirect()->route('produk.index')->with('success', 'Produk berhasil dihapus.');
+        $params = [];
+        if (request()->filled('return_query')) {
+            parse_str(request()->input('return_query'), $params);
+        } elseif ($ref = request()->headers->get('referer')) {
+            $q = parse_url($ref, PHP_URL_QUERY);
+            if ($q) parse_str($q, $params);
+        }
+        return redirect()->route('produk.index', $params)->with('success', 'Produk berhasil dihapus.');
+
     }
 }
